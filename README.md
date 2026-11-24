@@ -8,8 +8,8 @@ once, and modules that support it apply the change straight away, without restar
 
 ![The Mods panel with wkMapZoom's settings](screenshots/mods-panel.png)
 
-> **Version 0.1 is a beta.** It has been tested on replays in a window on one PC, alone and with wkDirect3D, wkMapZoom
-> and wkSpeedometer and a dozen other modules loaded. If something goes wrong, please
+> **Version 0.2 is a beta.** It has been tested on replays in a window on one PC, alone and with wkMapZoom 6,
+> wkSpeedometer and a dozen other modules loaded. If something goes wrong, please
 > [open an issue](https://github.com/GermsWorms/wkModMenu/issues) with the log (see Notes).
 
 ## What it does
@@ -28,7 +28,7 @@ once, and modules that support it apply the change straight away, without restar
 
 | | In the panel | A change applies |
 |---|---|---|
-| Modules that describe their settings to wkModMenu: [wkMapZoom](https://github.com/GermsWorms/wkMapZoom) 5.1, [wkSpeedometer](https://github.com/GermsWorms/wkSpeedometer) 1.1, [wkDirect3D](https://github.com/GermsWorms/wkDirect3D) 0.5 | every setting with a name, the right kind of control, limits and help; hotkeys as keys | at once |
+| Modules that describe their settings to wkModMenu: [wkMapZoom](https://github.com/GermsWorms/wkMapZoom) (5.1 and newer), [wkSpeedometer](https://github.com/GermsWorms/wkSpeedometer) (1.1 and newer) | every setting with a name, the right kind of control, limits and help; hotkeys as keys | at once |
 | Any other module with an ini file beside `WA.exe` (wkRealTime, wkTerrainSync, wkTrackMeBetter, ...) | what is in its file: numbers get − and + buttons, on / off words a switch, other text is shown only; the comments above a setting are its help | when that module reads its file again, for most at WA's next start |
 | Modules without a settings file | listed in grey | |
 
@@ -52,8 +52,9 @@ a `Z` after `wk` (`wkZRealTime.dll` → `wkRealTime.ini`), without digits at the
 Uninstall: delete `wkModMenu.dll`. To switch it off without removing it, put a file `wkModMenu.ini` next to `WA.exe`
 with the lines `[wkModMenu]` and `Enabled=0`.
 
-It works with every one of WA's renderers. With [wkDirect3D](https://github.com/GermsWorms/wkDirect3D) loaded the
-panel is drawn by the graphics card in full colour; without it, it is drawn into WA's own picture in WA's 256 colours.
+It works with every one of WA's Graphics APIs. With [wkMapZoom](https://github.com/GermsWorms/wkMapZoom) 6 loaded
+(which draws WA's picture on the graphics card) the panel is drawn by the graphics card in full colour; without it, it
+is drawn into WA's own picture in WA's 256 colours.
 
 ## Notes
 

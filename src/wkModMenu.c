@@ -33,7 +33,8 @@
  * moves its menu pointer (the panel's +0x10 / +0x14, kept inside +0x1C .. +0x28 by 005407D0) and calls ActivateAtCursor
  * at a click. This module leaves all of that running and only: widens the pointer's limits to the whole screen, has
  * WA's own menu not drawn (its drawing function 00535000 is skipped), draws its own panel and pointer after WA's frame
- * (through wkDirect3D in true colour when that is loaded and drawing, else into WA's 8-bit frame in WA's colours), and
+ * (by the graphics card in true colour when wkMapZoom 6 -- or the older wkDirect3D -- is loaded and drawing, else into
+ * WA's 8-bit frame in WA's colours), and
  * takes the clicks. Esc closes it as it closes WA's menu; "Back" gives WA's menu back. Nothing of the game is changed.
  *
  * Hooks (WA 3.8.1 only: WA.exe checked, and the bytes at each hook point): 00533DC0 GameRender, 005356D3 (see above),
@@ -45,7 +46,7 @@
  * by a click on "Mods"), select=<module>, set=<key>,<+|-|next>, scroll=<rows>, point=<x>,<y> (WA's menu pointer put
  * there), click (a click where the pointer is), capture=<key setting> (it waits for a key), back, close (WA's menu
  * closed), say (the state logged);
- * WKMODMENU_NO_GPU=1 never draws through wkDirect3D.
+ * WKMODMENU_NO_GPU=1 never draws through the graphics card.
  * MinHook (third_party/minhook) is BSD licensed. */
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -59,7 +60,7 @@
 #include "MinHook.h"
 #include "image_guard.h"
 
-#define VERSION "0.1 beta"
+#define VERSION "0.2 beta"
 #define WA_BASE 0x400000u
 #define VA(a) ((uintptr_t)(base + ((uintptr_t)(a) - WA_BASE)))
 #define U32(a) (*(uint32_t *)(uintptr_t)(a))
@@ -708,18 +709,31 @@ static void make_arrow(void) {              /* the pointer: a white arrow with a
     arrow_ok = 1;
 }
 
-/* ---- onto the screen: through wkDirect3D, or into WA's frame ---- */
+/* ---- onto the screen: through the graphics-card drawing (wkMapZoom's), or into WA's frame ---- */
 static int (__cdecl *d3d_overlay)(const uint32_t *, int, int, int, int, int);
 static int d3d_looked;
+/* the module that draws on the graphics card: wkMapZoom 6 and newer has that drawing in it; before, it was a module of
+ * its own, wkDirect3D (still used when it is loaded: then it is the one that draws) */
+static HMODULE gpu_module(const char **name) {
+    static const char *const names[2] = {"wkDirect3D.dll", "wkMapZoom.dll"};
+    int i;
+    for (i = 0; i < 2; i++) {
+        const HMODULE m = GetModuleHandleA(names[i]);
+        if (m && GetProcAddress(m, "wkDirect3D_Api") && GetProcAddress(m, "wkDirect3D_Overlay")) { if (name) *name = names[i]; return m; }
+    }
+    return NULL;
+}
+
 static void d3d_find(void) {
-    const HMODULE m = GetModuleHandleA("wkDirect3D.dll");
+    const char *gpu_name = "";
+    const HMODULE m = gpu_module(&gpu_name);
     int (__cdecl *api)(void);
     d3d_looked = 1;
     if (!m || no_gpu) return;
     api = (int (__cdecl *)(void))(void *)GetProcAddress(m, "wkDirect3D_Api");
     if (!api || api() < 1) return;
     d3d_overlay = (int (__cdecl *)(const uint32_t *, int, int, int, int, int))(void *)GetProcAddress(m, "wkDirect3D_Overlay");
-    if (d3d_overlay) say("wkDirect3D is loaded: the panel is drawn through it when it draws the frame");
+    if (d3d_overlay) say("%s draws on the graphics card: the panel is drawn through it when it draws the frame", gpu_name);
 }
 
 /* the shown palette's nearest colour, by 5 bits of red, green and blue (worked out once a colour; started afresh when
@@ -775,7 +789,7 @@ static void show(void) {
     else to_frame(ppre, pw, ph, px0, py0);
     if (!arrow_ok) make_arrow();
     if (!gpu || !d3d_overlay(arrow, 24, 24, 24 * 4, ptr_x, ptr_y)) to_frame(arrow, 24, 24, ptr_x, ptr_y);
-    if (gpu != said) { said = gpu; say("the panel is drawn %s", gpu ? "through wkDirect3D (true colour)" : "into WA's frame (WA's colours)"); }
+    if (gpu != said) { said = gpu; say("the panel is drawn %s", gpu ? "by the graphics card (true colour)" : "into WA's frame (WA's colours)"); }
 }
 
 /* ---- opening, closing, clicking ---- */
